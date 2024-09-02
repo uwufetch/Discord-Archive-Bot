@@ -1,0 +1,4 @@
+luvit >= 2.18.1
+luvi >= v2.14.0
+libuv >= 1.44.2
+discordia latest ver
