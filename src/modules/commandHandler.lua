@@ -55,7 +55,7 @@ commandHandler.executeCommand = function (tokens)
     local success, err = pcall(function ()
         print(1)
         local commandName = string.lower(tokens[3])
-        local foundCommand = commands[commandName]
+        local foundCommand = commands()[commandName]
         print(2)
         if foundCommand then
             if foundCommand["Arguments"][2] == true then

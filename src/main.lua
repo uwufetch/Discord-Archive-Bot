@@ -27,7 +27,22 @@ client:on('messageCreate', function(message)
     end
 end)
 
+client:on('slashCommand', function(interaction)
+    local message = {}
+    message.content = '$'..interaction.options.text
+
+    local channelId = interaction.channel_id
+    local channel = client:getChannel(channelId)
+    message.channel = channel
+
+    if message.content:sub(1, 1) == settings['Prefix'] then
+        print("parsing slash")
+        commandHandler.parseMessage(message)
+    else
+        print("no prefix slash")
+    end
+end)
+
 
 client:run('Bot ' .. settings['BotToken'])
-
 return client

@@ -1,4 +1,4 @@
 return {
-    ['BotToken'] = "BOT_TOKEN_HERE",
+    ['BotToken'] = "BOT_TOKEN",
     ['Prefix'] = "$"
 }

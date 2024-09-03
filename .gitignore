@@ -1,2 +1,5 @@
 */discordia.log
 */gateway.json
+*/.gitignore
+*/token.txt
+*/archived_messages.txt
