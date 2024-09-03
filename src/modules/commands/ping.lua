@@ -1,4 +1,4 @@
-return function (tokens)
-    local channel =  tokens[1].channel
-    channel:send("Pong!")
+return function (Tokens)
+    local Channel =  Tokens[1].channel
+    Channel:send("Pong!")
 end

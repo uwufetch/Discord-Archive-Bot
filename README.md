@@ -1,3 +1,6 @@
-A discord app, made with LUA, that archives the contents of any communication channels.
+# Discord Archive Bot
+A Discord Archive bot, that uses **Luvit**, and is written in **Lua**.
+Archives a text channel (guilds only), and then sends it to the user via DMs.
 
-Dependencies listed in dependencies.txt
+## Any and all dependencies are listed in dependencies.txt
+## Bot must have all intents enabled to function as intended
