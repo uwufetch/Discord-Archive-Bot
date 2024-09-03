@@ -1,72 +1,69 @@
-local function formatTimestamp(timestamp)
-    if string.match(timestamp, "T") then
-        local year, month, day, hour, min, sec = string.match(timestamp, "(%d+)-(%d+)-(%d+)T(%d+):(%d+):(%d+)")
-        return string.format("%04d-%02d-%02d %02d:%02d", tonumber(year), tonumber(month), tonumber(day), tonumber(hour), tonumber(min))
+local function FormatTimestamp(Timestamp)
+    if string.match(Timestamp, "T") then
+        local Year, Month, Day, Hour, Min, Sec = string.match(Timestamp, "(%d+)-(%d+)-(%d+)T(%d+):(%d+):(%d+)")
+        return string.format("%04d-%02d-%02d %02d:%02d", tonumber(Year), tonumber(Month), tonumber(Day), tonumber(Hour), tonumber(Min))
     else
-        local numericTimestamp = tonumber(timestamp)
-        if not numericTimestamp then
-            print("Error: Timestamp is not a valid number.")
+        local NumericTimestamp = tonumber(Timestamp)
+        if not NumericTimestamp then
             return "Invalid Timestamp"
         end
 
-        local date = os.date("*t", numericTimestamp / 1000)
-        return string.format("%04d-%02d-%02d %02d:%02d", date.year, date.month, date.day, date.hour, date.min)
+        local Date = os.date("*t", NumericTimestamp / 1000)
+        return string.format("%04d-%02d-%02d %02d:%02d", Date.year, Date.month, Date.day, Date.hour, Date.min)
     end
 end
 
-return function (tokens)
-    print("Archiving...")
-
-    local channel = tokens[1].channel
-    local lastFetchedId = nil
-    local fetchedMessages = {}
-    local lastBatchSize = 0
+return function (Tokens)
+    local Channel = Tokens[1].channel
+    local LastFetchedId = nil
+    local FetchedMessages = {}
+    local LastBatchSize = 0
 
     while true do
-        local messages = channel:getMessages(100, lastFetchedId)
+        local Messages = Channel:getMessages(100, LastFetchedId)
         
-        if #messages == 0 or #messages == lastBatchSize then break end
+        if #Messages == 0 or #Messages == LastBatchSize then break end
         
-        for id, message in pairs(messages) do
-            table.insert(fetchedMessages, message)
-            lastFetchedId = id
+        for Id, Message in pairs(Messages) do
+            table.insert(FetchedMessages, Message)
+            LastFetchedId = Id
         end
 
-        lastBatchSize = #messages
-        print("Fetched " .. #fetchedMessages .. " messages so far...")
+        LastBatchSize = #Messages
+        print("Fetched " .. #FetchedMessages .. " messages so far...")
     end
 
-    table.sort(fetchedMessages, function(a, b)
+    table.sort(FetchedMessages, function(a, b)
         return a.id < b.id
     end)
 
-    local fileName = "archived_messages.txt"
-    local file = io.open(fileName, "w")
+    local FileName = "archived_messages.txt"
+    local File = io.open(FileName, "w")
 
-    if not file then
+    if not File then
         print("Error: Couldnt open file for writing.")
         return
     end
 
-    for _, message in ipairs(fetchedMessages) do
-        local formattedTimestamp = formatTimestamp(message.timestamp)
-        file:write(string.format("%s %s %s: %s\n", formattedTimestamp, message.id, message.author.username, message.content))
+    for _, Message in ipairs(FetchedMessages) do
+        local FormattedTimestamp = FormatTimestamp(Message.timestamp)
+        File:write(string.format("%s %s %s: %s\n", FormattedTimestamp, Message.id, Message.author.username, Message.content))
     end
 
-    file:close()
+    File:close()
 
-    print("Messages written to " .. fileName)
-    local user = tokens[1].author
-    local attachment = { fileName }
+    print("Messages written to " .. FileName)
+    local User = Tokens[1].author
+    local Attachment = { FileName }
 
-    local success, err = pcall(function()
-        user:send({
+    local Success, Err = pcall(function()
+        User:send({
             content = "Here are the archived messages:",
-            files = attachment
+            files = Attachment
         })
     end)
 
-    if not success then
-        print("Error sending file: " .. err)
+    if not Success then
+        print("Error sending file: " .. Err)
     end
 end

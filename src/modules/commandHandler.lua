@@ -1,88 +1,71 @@
-local splitString = require('./splitString.lua')
-local commands = require('./commands/commandsIndex.lua')
+local Commands = require('./Commands/_Commands')
 
-local commandHandler = {}
-
-
--- mental note of token table consists of the following:
---[[
-    message     token[1] = message
-    prefix      token[2] = $
-    command     token[3] = echo
-    arg1        token[4] = lol wtf
-    arg2        token[5] = some
-    arg3        token[6] = other
-    arg4        token[7] = args
-    and so on
-]]
-commandHandler.tokenizeMessage = function (message)
-    local content = message.content
-    print("tokenize")
-    local tokens = {}
-
-    table.insert(tokens, message)
-
-    local prefix = content:sub(1, 1)
-    table.insert(tokens, prefix)
-
-    content = content:sub(2)
-
-
-    for quotedToken in string.gmatch(content, '"[^"]*"') do
-        local cleanToken = quotedToken:gsub('^"', ''):gsub('"$', '')
-        table.insert(tokens, cleanToken)
-        content = content:gsub(quotedToken, "")
+local function SplitString(inputstr, sep)
+    if sep == nil then
+        sep = "%s"
     end
-
-
-    -- splti remaining tokens
-    local remainingTokens = splitString(content)
-    if remainingTokens then
-        for _, token in ipairs(remainingTokens) do
-            if token ~= "" then
-                table.insert(tokens, token)
-            end
-        end
-    else
-        print("Error: splitString returned nil")
+    
+    local t = {}
+    for str in string.gmatch(inputstr, "([^" .. sep .. "]+)") do
+        table.insert(t, str)
     end
-
-    return tokens
+    
+    return t
 end
 
-commandHandler.executeCommand = function (tokens)
-    print("execute")
-    local success, err = pcall(function ()
-        print(1)
-        local commandName = string.lower(tokens[3])
-        local foundCommand = commands()[commandName]
-        print(2)
-        if foundCommand then
-            if foundCommand["Arguments"][2] == true then
-                print(3)
-                if ((#tokens - 3 ) > foundCommand["Arguments"][1]) or ((#tokens - 3 ) < foundCommand["Arguments"][1]) then
-                    commands['error']['Function'](tokens, "too many or too little arguments bud")
+local CommandHandler = {
+    TokenizeMessage = function (Message)
+        local Tokens = {}
+        table.insert(Tokens, Message)
+
+        local Content = Message.content
+
+        table.insert(Tokens, (Content:sub(1,1)))
+        Content = Content:sub(2)
+
+        for QuotedToken in string.gmatch(Content, '"[^"]*"') do
+            table.insert(Tokens, QuotedToken)
+            Content = Content:gsub(QuotedToken, "")
+        end
+
+        local RemainingTokens = SplitString(Content)
+        if RemainingTokens then
+            for _, Token in ipairs(RemainingTokens) do
+                if Token ~= "" then
+                    table.insert(Tokens, Token)
+                end
+            end
+        end
+
+        return Tokens
+    end,
+
+
+    ExecuteCommand = function (Tokens)
+        local FetchedCommand = Commands()[Tokens[3]] or nil
+
+        if FetchedCommand then
+            local ErrorOnMismatch = FetchedCommand.Arguments.ErrorOnMismatch
+            local ExpectedArguments = FetchedCommand.Arguments.ExpectedArguments
+
+            if ErrorOnMismatch == true then
+                if (#Tokens - 3) > ExpectedArguments then
+                    Commands()._error(Tokens, "Too many arguments.")
+                    return
+                elseif (#Tokens - 3) < ExpectedArguments then
+                    Commands()._error(Tokens, "Too little arguments.")
                     return
                 end
-                foundCommand.Function(tokens)
-                print(4)
-            else
-                print(5)
-                foundCommand.Function(tokens)
             end
+            Commands()[Tokens[3]](Tokens)
         end
+    end
+}
+
+return function (Message)
+    local Success, Err = pcall(function ()
+        local Tokens = CommandHandler.TokenizeMessage(Message)
+        CommandHandler.ExecuteCommand(Tokens)
     end)
-
-    if err and not success then print(err) end
+    if Err and not Success then print(Err) end
 end
-
-commandHandler.parseMessage = function (message)
-    print("parse")
-    local success, err = pcall(function ()
-        commandHandler.executeCommand(commandHandler.tokenizeMessage(message))
-    end)
-    if err and not success then print(err) end
-end
-
-
-return commandHandler
